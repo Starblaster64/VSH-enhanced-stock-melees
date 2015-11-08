@@ -1,6 +1,9 @@
 # [VSH] Enhanced Stock Melees
 Adds minor bonuses to stock melee weapon in VSH to make them not completely useless.
 
+## Development
+Currently under development, do not use on a public server yet.
+
 
 
 ## Dependencies
