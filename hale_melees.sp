@@ -2,15 +2,12 @@
 #pragma newdecls optional
 
 #include <sourcemod>
-#include <tf2items>
 #include <tf2attributes>
 #include <tf2_stocks>
 #include <sdkhooks>
 #include <saxtonhale>
 #include <morecolors>
 
-//#tryinclude <saxtonhale> //COMPILE WITH ONLY VSH OR FF2, NOT BOTH
-//#tryinclude <freak_fortress_2>
 
 #define TF_MAX_PLAYERS	34
 
@@ -24,12 +21,12 @@ public Plugin myinfo =
 };
 
 //Variables
-ConVar cvarEnabled, cvarAnnounce, cvarReskins, cvarScout, cvarScoutVar, cvarSoldier, cvarSoldierVar, cvarDemo, cvarDemoVar, cvarHeavy, cvarHeavyVar, cvarEngineer, cvarEngineerVar, cvarMedic, cvarMedicVar, cvarSniper, cvarSniperVar ;
+ConVar cvarEnabled, cvarAnnounce, cvarReskins, cvarScout, cvarScoutVar, cvarSoldier, cvarSoldierVar, cvarDemo, cvarDemoVar, cvarHeavy, cvarHeavyVar, cvarEngineer, cvarEngineerVar;
 bool g_bEnabled = false;
-int IsEnabled, ReskinsEnabled, ScoutUse, SoldierUse, DemoUse, HeavyUse, EngineerUse, EngineerVar, MedicUse, MedicVar, SniperUse;
-float ScoutVar, SoldierVar, DemoVar, HeavyVar, SniperVar, Announce = 45.0;
+int IsEnabled, ReskinsEnabled, ScoutUse, SoldierUse, DemoUse, HeavyUse, EngineerUse, EngineerVar;
+float ScoutVar, SoldierVar, DemoVar, HeavyVar, Announce = 45.0;
 int MeleeUses[TF_MAX_PLAYERS];
-Handle useHUD;
+//Handle useHUD;
 
 public void OnPluginStart()
 {
@@ -38,87 +35,86 @@ public void OnPluginStart()
 	cvarAnnounce = CreateConVar("hale_melees_announce", "45.0", "Broadcasts of any enabled enhanced melees will be displayed every X seconds. Must be > 1 to display at all.", FCVAR_PLUGIN, true, 0.0, false);
 	cvarReskins = CreateConVar("hale_melees_reskins", "0.0", "Sets whether reskins of stock melees will receive the same bonuses as stock melees.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	
-	cvarScout = CreateConVar("hale_melees_scout", "1.0", "Controls how many times the Scout's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarScoutVar = CreateConVar("hale_melees_scout_variable", "2.0", "Sets how long the Bonk! condition lasts for.", FCVAR_PLUGIN, true, 0.0, false);
+	cvarScout = CreateConVar("hale_melees_scout", "2.0", "Determines how many times the Scout's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	cvarScoutVar = CreateConVar("hale_melees_scout_variable", "1.0", "Sets how long the Bonk! condition lasts for.", FCVAR_PLUGIN, true, 0.0, false);
 	
-	cvarSoldier = CreateConVar("hale_melees_soldier", "1.0", "Controls how many times the Soldier's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarSoldierVar = CreateConVar("hale_melees_soldier_variable", "1.5", "Sets how much faster taunts are with shovel out as a percentage. Cannot be lower than 1.", FCVAR_PLUGIN, true, 1.0, false);
+	cvarSoldier = CreateConVar("hale_melees_soldier", "1.0", "Enables/Disables the Soldier's melee enhancement.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	cvarSoldierVar = CreateConVar("hale_melees_soldier_variable", "1.30", "Sets how much faster Ubercharge is generated while healing a Soldier with a Shovel out. Cannot be lower than 1.0.", FCVAR_PLUGIN, true, 1.0, false);
 	
-	cvarDemo = CreateConVar("hale_melees_demo", "2.0", "Controls how many times the Demoman's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	//cvarPyro = CreateConVar("hale_melees_pyro", "-1.0", "Determines how many times the Pyro's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	//cvarPyroVar = CreateConVar("hale_melees_pyro_variable", "5.0", "Something soething Pyro", FCVAR_PLUGIN, true, 0.0, false);
+	
+	cvarDemo = CreateConVar("hale_melees_demo", "2.0", "Determines how many times the Demoman's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
 	cvarDemoVar = CreateConVar("hale_melees_demo_variable", "1.5", "Sets how long the healing effect lasts in seconds. Cannot be negative.", FCVAR_PLUGIN, true, 0.0, false);
 	
-	cvarHeavy = CreateConVar("hale_melees_heavy", "2.0", "Controls how many times the Heavy's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	cvarHeavy = CreateConVar("hale_melees_heavy", "2.0", "Determines how many times the Heavy's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
 	cvarHeavyVar = CreateConVar("hale_melees_heavy_variable", "400.0", "Sets how much extra knockback the fists receive in Hammer Units. Can be negative.", FCVAR_PLUGIN);
 	
-	cvarEngineer = CreateConVar("hale_melees_engineer", "1.0", "Controls how many times the Engineer's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	cvarEngineer = CreateConVar("hale_melees_engineer", "1.0", "Determines how many times the Engineer's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
 	cvarEngineerVar = CreateConVar("hale_melees_engineer_variable", "100.0", "Sets how much metal is gained per use. Cannot be negative.", FCVAR_PLUGIN, true, 0.0, false);
 	
-	cvarMedic = CreateConVar("hale_melees_medic", "1.0", "Controls how many times the Medic's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarMedicVar = CreateConVar("hale_melees_medic_variable", "1.0", "Sets how many team-mates to revive per use. -1 for the entire team (not recommended).", FCVAR_PLUGIN, true, 0.0, false);
+	//cvarMedic = CreateConVar("hale_melees_medic", "1.0", "Determines how many times the Medic's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	//cvarMedicVar = CreateConVar("hale_melees_medic_variable", "1.0", "Sets how many team-mates to revive per use. -1 for the entire team (not recommended).", FCVAR_PLUGIN, true, 0.0, false);
 	
-	cvarSniper = CreateConVar("hale_melees_sniper", "-1.0", "Controls how many times the Sniper's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarSniperVar = CreateConVar("hale_melees_variable", "5.0", "Sets how long the outline lasts. Cannot be negative (duh).", FCVAR_PLUGIN, true, 0.0, false);
+	//cvarSniper = CreateConVar("hale_melees_sniper", "-1.0", "Determines how many times the Sniper's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
+	//cvarSniperVar = CreateConVar("hale_melees_sniper_variable", "5.0", ".", FCVAR_PLUGIN, true, 0.0, false);
 	
 	AutoExecConfig(true, "VSHMeleeEnhancer"); //Generates config file in cfg/sourcemod
 	
 	//Create hud element (like VSH's rageHUD)
-	useHUD = CreateHudSynchronizer();
+	//useHUD = CreateHudSynchronizer();
 
 	for (new client = 1; client <= MaxClients; client++)
 	{
 		MeleeUses[client] = 0;
 		if (IsClientInGame(client)) // IsValidClient(client, false)
 		{
-			//SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+			SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
 		}
 	}
-	HookEvent("teamplay_round_start", event_round_start);
 	HookEvent("player_spawn", event_player_spawn);
 	HookEvent("player_death", event_player_death);
-	HookEvent("player_hurt", event_hurt, EventHookMode_Pre);
+	//HookEvent("player_hurt", event_hurt, EventHookMode_Pre);
 	
 	RegConsoleCmd("taunt", OnPlayerTaunt);
 }
 
 public void OnConfigsExecuted()
 {
-	IsEnabled = cvarEnabled.IntValue;
-	Announce = cvarAnnounce.FloatValue;
-	ReskinsEnabled = cvarReskins.IntValue;
+	IsEnabled = GetConVarInt(cvarEnabled);
+	Announce = GetConVarFloat(cvarAnnounce);
+	ReskinsEnabled = GetConVarInt(cvarReskins);
 	
-	ScoutUse = cvarScout.IntValue;
-	ScoutVar = cvarScoutVar.FloatValue;
+	ScoutUse = GetConVarInt(cvarScout);
+	ScoutVar = GetConVarFloat(cvarScoutVar);
 	
-	SoldierUse = cvarSoldier.IntValue;
-	SoldierVar = cvarSoldierVar.FloatValue;
+	SoldierUse = GetConVarInt(cvarSoldier);
+	SoldierVar = GetConVarFloat(cvarSoldierVar);
 	
-	DemoUse = cvarDemo.IntValue;
-	DemoVar = cvarDemoVar.FloatValue;
+	DemoUse = GetConVarInt(cvarDemo);
+	DemoVar = GetConVarFloat(cvarDemoVar);
 	
-	HeavyUse = cvarHeavy.IntValue;
-	HeavyVar = cvarHeavyVar.FloatValue;
+	HeavyUse = GetConVarInt(cvarHeavy);
+	HeavyVar = GetConVarFloat(cvarHeavyVar);
 	
-	EngineerUse = cvarEngineer.IntValue;
-	EngineerVar = cvarEngineerVar.IntValue;
+	EngineerUse = GetConVarInt(cvarEngineer);
+	EngineerVar = GetConVarInt(cvarEngineerVar);
 	
-	MedicUse = cvarMedic.IntValue;
-	MedicVar = cvarMedicVar.IntValue;
+	//MedicUse = GetConVarInt(cvarMedic);
+	//MedicVar = GetConVarInt(cvarMedicVar);
 	
-	SniperUse = cvarSniper.IntValue;
-	SniperVar = cvarSniperVar.FloatValue;
+	//SniperUse = cvarSniper.IntValue;
+	//SniperVar = cvarSniperVar.FloatValue;
 	
-	/*SpyUse = cvarSpy.IntValue;
-	SpyVar = cvarSpyVar.FloatValue;
+	//SpyUse = cvarSpy.IntValue;
+	//SpyVar = cvarSpyVar.FloatValue;
 	
-	PyroUse = cvarPyro.IntValue;
-	PyroVar = cvarPyroVar.FloatValue;*/
-	
-	//PrintToChatAll("Attributes: %s", BallAttributes); //DEBUG
+	//PyroUse = cvarPyro.IntValue;
+	//PyroVar = cvarPyroVar.FloatValue;
 	
 	if (VSH_IsSaxtonHaleModeMap() && IsEnabled)
 	{
 		g_bEnabled = true;
-		PrintToChatAll("g_bEnabled true"); //DEBUG
 		
 		if (Announce > 1.0)
 			CreateTimer(Announce, Timer_Announce, _, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE);
@@ -126,77 +122,71 @@ public void OnConfigsExecuted()
 	else
 	{
 		g_bEnabled = false;
-		PrintToChatAll("g_bEnabled false"); //DEBUG
 	}
 }
 
 public void OnClientPostAdminCheck(int client)
 {
 	MeleeUses[client] = 0;
-	//SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
 }
 
 public Action event_player_spawn(Event event, const char[] name, bool dontBroadcast)
 {
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	PrintToChatAll("player %i spawned", client); //DEBUG
-	if (g_bEnabled && VSH_GetRoundState() != -1 && client != VSH_GetSaxtonHaleUserId())
+	int HaleTeam = VSH_GetSaxtonHaleTeam();
+	MeleeUses[client] = 0;
+	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam)
 	{
 		if (TF2_GetPlayerClass(client) == TFClass_Scout)
 		{
 			MeleeUses[client] = ScoutUse;
-			PrintToChatAll("testbatspawn %i", MeleeUses[client]); //DEBUG
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_Soldier)
 		{
 			MeleeUses[client] = SoldierUse;
-			RequestFrame(Frame_Spawn, client);
+			if (MeleeUses[client] > 0)
+				RequestFrame(Frame_Spawn, client);
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
 			MeleeUses[client] = DemoUse;
 		if (TF2_GetPlayerClass(client) == TFClass_Heavy)
 		{
 			MeleeUses[client] = HeavyUse;
-			PrintToChatAll("testheavy"); //DEBUG
-			PrintToChatAll("%i uses", MeleeUses[client]); //DEBUG
-			RequestFrame(Frame_Spawn, client);
+			if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
+				RequestFrame(Frame_Spawn, client);
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
 			MeleeUses[client] = EngineerUse;
-			PrintToChatAll("%i uses", MeleeUses[client]); //DEBUG
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_Medic)
-			MeleeUses[client] = MedicUse;
-		if (TF2_GetPlayerClass(client) == TFClass_Sniper)
-			MeleeUses[client] = SniperUse;
+		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
+			MeleeUses[client] = MedicUse;*/
+		/*if (TF2_GetPlayerClass(client) == TFClass_Sniper)
+			MeleeUses[client] = SniperUse;*/
 		/*else
-			MeleeUses[client] = 0;*/
+			MeleeUses[client] = 0; //Players who spawn mid-round will not recieve enhancements.*/
 	}
 	return Plugin_Continue;
 }
 
-public Frame_Spawn(any:client)
+public Frame_Spawn(any client)
 {
-	PrintToChatAll("timer made"); //DEBUG
-
 	if (IsClientInGame(client) && IsPlayerAlive(client))
 	{
 		int weapon = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 		int swepindex = (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"));
-		PrintToChatAll("testst2"); //DEBUG
 		switch (swepindex)
 		{
 			case 5, 195: //Stock Fists
 			{
 				TF2Attrib_SetByDefIndex(weapon, 215, HeavyVar);
 				TF2Attrib_SetByDefIndex(weapon, 216, HeavyVar);
-				PrintToChatAll("Fists changed! from spawn timer"); //DEBUG
 			}
 			case 6, 196: //Stock Shovel
 			{
 				TF2Attrib_SetByDefIndex(weapon, 128, 1.0);
-				TF2Attrib_SetByDefIndex(weapon, 201, SoldierVar);
+				TF2Attrib_SetByDefIndex(weapon, 239, SoldierVar);
 			}
 			case 1127, 1123, 1071, 1013, 954, 939, 880, 474, 423, 264, 587: //Reskins
 			{
@@ -210,142 +200,86 @@ public Frame_Spawn(any:client)
 					if (TF2_GetPlayerClass(client) == TFClass_Soldier)
 					{
 						TF2Attrib_SetByDefIndex(weapon, 128, 1.0);
-						TF2Attrib_SetByDefIndex(weapon, 201, SoldierVar);
+						TF2Attrib_SetByDefIndex(weapon, 239, SoldierVar);
 					}
-				}
+				} 
 			}
 		}
 	}
 }
 
-public Action event_round_start(Event event, const char[] name, bool dontBroadcast)
-{
-	for (int iclient = 1; iclient <= MaxClients; iclient++)
-	{
-		
-	}
-	
-	if (g_bEnabled && VSH_GetRoundState() == 0)
-	{
-		//CreateTimer(9.1, StartBallTimer, _, TIMER_FLAG_NO_MAPCHANGE);
-		
-	}
-	
-	return Plugin_Continue;
-}
-
 public Action event_player_death(Event event, const char[] name, bool dontBroadcast)
 {
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
-	if (g_bEnabled && VSH_GetRoundState() == 1)
+	if (g_bEnabled && VSH_GetRoundState() != -1)
 	{
 		MeleeUses[client] = 0;
 	}
 	return Plugin_Continue;
 }
 
-/*public OnEntityCreated(entity, const char[] classname)
-{
-	if (!StrEqual(classname, "instanced_scripted_scene", false)) return;
-	SDKHook(entity, SDKHook_Spawn, OnSceneSpawned);
-}
-
-public Action OnSceneSpawned(entity) //Checks for stock taunts
-{
-	new client = GetEntPropEnt(entity, Prop_Data, "m_hOwner");
-	char scenefile[128];
-	GetEntPropString(entity, Prop_Data, "m_iszSceneFile", scenefile, sizeof(scenefile));
-	if (StrContains(scenefile, "taunt03") || //Stock melee taunt
-		StrContains(scenefile, "taunt02") || //Secondary weapon taunts (used on most classes for Saxxy class weapons)
-		StrContains(scenefile, "taunt06") || //Halloween thriller taunt (for Halloween compatibility)
-		StrContains(scenefile, "taunt09"))	//Soldier Robot Costume taunt (Also for Halloween compatibility)
-	{
-		// Stock-compatible taunt played, now check if holding stock weapon
-		PrintToChatAll("Stock compat taunt detected!!"); //DEBUG
-	}
-}*/
-
-public Action event_hurt(Event event, const char[] name, bool dontBroadcast)
+public Action OnTakeDamage(int client, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	if (!IsEnabled || VSH_GetRoundState() != 1)
 		return Plugin_Continue;
-
-	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	PrintToChatAll("client %i", client); //DEBUG
-	PrintToChatAll("hale %i", VSH_GetSaxtonHaleUserId());
-	
-	int attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-	PrintToChatAll("attacker %i", attacker); //DEBUG
 	
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	PrintToChatAll("hale team %i", HaleTeam); //DEBUG
-
-	//new damage = GetEventInt(event, "damageamount");
-	//new custom = GetEventInt(event, "custom");
-	int weapon = GetEventInt(event, "weaponid");
-	if (GetClientTeam(attacker) == HaleTeam)
+	
+	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
+	int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
+	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
+	
+	if (weapon != meleeweapon)
+		return Plugin_Continue;
+	
+	if (GetClientTeam(client) != HaleTeam)
 		return Plugin_Continue;
 
 	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
 		return Plugin_Continue;
 
-	int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
-	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
 	int reskin = -1;
 
-	if (meleeindex == 1127 || //Reskins
-		meleeindex == 1123 ||
-		meleeindex == 1071 ||
-		meleeindex == 1013 ||
-		meleeindex == 954 ||
-		meleeindex == 939 ||
-		meleeindex == 880 ||
-		meleeindex == 474 ||
-		meleeindex == 423 ||
-		meleeindex == 264 ||
-		meleeindex == 587)
+	if (wepindex == 1127 || //Reskins
+		wepindex == 1123 ||
+		wepindex == 1071 ||
+		wepindex == 1013 ||
+		wepindex == 954 ||
+		wepindex == 939 ||
+		wepindex == 880 ||
+		wepindex == 474 ||
+		wepindex == 423 ||
+		wepindex == 264 ||
+		wepindex == 587)
 		reskin = 1;
 
-	if (meleeindex == 0 || //Stock
-		meleeindex == 190 ||
-		meleeindex == 5 ||
-		meleeindex == 195 ||
-		meleeindex == 3 ||
-		meleeindex == 193)
+	if (wepindex == 0 || //Stock
+		wepindex == 190 ||
+		wepindex == 5 ||
+		wepindex == 195 ||
+		wepindex == 3 ||
+		wepindex == 193)
 		reskin = 0;
 
 	if (TF2_GetPlayerClass(attacker) == TFClass_Scout)
 	{
-		if (weapon == TF_WEAPON_BAT || weapon == TF_WEAPON_BAT_FISH && (reskin == 0 || (ReskinsEnabled && reskin != -1)))
+		if (reskin == 0 || (ReskinsEnabled && reskin != -1))
 		{
-			PrintToChatAll("testbat, %i", MeleeUses[attacker]); //DEBUG
 			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
 			{
 				TF2_AddCondition(attacker, TFCond_Bonked, ScoutVar);
 				if (MeleeUses[attacker] != -1)
+				{
 					MeleeUses[attacker] -= 1;
+					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
+				}
 				return Plugin_Changed;
 			}
 		}
 	}
-	/*if (TF2_GetPlayerClass(attacker) == TFClass_Sniper)
-	{
-		if (weapon == TF_WEAPON_CLUB && (reskin == 0 || (ReskinsEnabled && reskin != -1)))
-		{
-			PrintToChatAll("testkukri, %i", MeleeUses[attacker]); //DEBUG
-			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
-			{
-				SetEntProp(client, Prop_Send, "m_bGlowEnabled", 1);
-				CreateTimer()
-				if (MeleeUses[attacker] != -1)
-					MeleeUses[attacker] -= 1;
-				return Plugin_Changed;
-			}
-		}
-	}*/
 	if (TF2_GetPlayerClass(attacker) == TFClass_Heavy)
 	{
-		if (weapon == TF_WEAPON_FISTS && (reskin == 0 || (ReskinsEnabled && reskin != -1)))
+		if (reskin == 0 || (ReskinsEnabled && reskin != -1))
 		{
 			if (MeleeUses[attacker] == 0)
 			{
@@ -357,9 +291,9 @@ public Action event_hurt(Event event, const char[] name, bool dontBroadcast)
 				if (MeleeUses[attacker] != -1)
 				{
 					MeleeUses[attacker] -= 1;
-					PrintToChatAll("testfists, %i", MeleeUses[attacker]); //DEBUG
+					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
 				}
-				//return Plugin_Changed;
+				return Plugin_Changed;
 			}
 		}
 	}
@@ -378,7 +312,7 @@ public Action OnPlayerTaunt(int client, int args)
 	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");
 	int reskin = -1;
 	
-	if (wepindex == 1 || wepindex == 6 || wepindex == 7 || wepindex == 8 || //Stock
+	if (wepindex == 1 || wepindex == 6 || wepindex == 7 || wepindex == 8 || //Stock for Demo/Medic/Soldier
 		wepindex == 191 || wepindex == 196 || wepindex == 197 || wepindex == 198) //Strange Stock
 			reskin = 0;
 		
@@ -392,50 +326,54 @@ public Action OnPlayerTaunt(int client, int args)
 			
 	if (reskin == 0 || (ReskinsEnabled && reskin != -1))
 	{
-		PrintToChatAll("Stock compat taunt detected!!"); //DEBUG
-		//if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
 		if (!TF2_IsPlayerInCondition(client, TFCond_Taunting))
 			RequestFrame(Frame_TauntBonus, client);
 	}
 	
 	return Plugin_Continue;
 }
-public Frame_TauntBonus(any:clientid)
+
+public Action Timer_TauntBonusDemo(Handle mTimer, any client)
+{
+	if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
+	{
+		TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
+		if (MeleeUses[client] != -1)
+		{
+			MeleeUses[client] -= 1;
+			CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
+		}
+	}
+}
+
+public Action Timer_TauntBonusEngineer(Handle mTimer, any client) //Broadcasts
+{
+	int metal = TF2_GetMetal(client);
+	TF2_SetMetal(client, metal + EngineerVar);
+	if (MeleeUses[client] != -1)
+	{
+		MeleeUses[client] -= 1;
+		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
+	}
+}
+
+public Frame_TauntBonus(any clientid)
 {
 	int client = clientid;
-	PrintToChatAll("firt frame"); //DEBUG
-	PrintToChatAll("%i has %i uses", client, MeleeUses[client]); //DEBUG
-	if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
+	if ((MeleeUses[client] > 0 || MeleeUses[client] == -1) && TF2_IsPlayerInCondition(client, TFCond_Taunting))
 	{
-		if (TF2_GetPlayerClass(client) == TFClass_Soldier)
-		{
-			if (TF2_IsPlayerInCondition(client, TFCond_Dazed))
-			{
-				TF2_RemoveCondition(client, TFCond_Dazed);
-				if (MeleeUses[client] != -1)
-					MeleeUses[client] -= 1;
-			}
-		}
 		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
 		{
-			if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
-			{
-				TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
-				if (MeleeUses[client] != -1)
-					MeleeUses[client] -= 1;
-			}
-		}
+			CreateTimer(4.0, Timer_TauntBonusDemo, client, TIMER_FLAG_NO_MAPCHANGE);
+		} //(Mostly) Stops players cheating the system with partner taunts.
 		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
-			int metal = TF2_GetMetal(client);
-			TF2_SetMetal(client, metal + 100);
-			if (MeleeUses[client] != -1)
-				MeleeUses[client] -= 1;
-			PrintToChatAll("metal give"); //DEBUG
-			//return Plugin_Handled;
+			CreateTimer(4.0, Timer_TauntBonusEngineer, client, TIMER_FLAG_NO_MAPCHANGE);
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_Medic)
-			PrintToChatAll("place"); //DEBUG
+		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
+		{
+			PrintToChatAll("placeholder"); //DEBUG
+		}*/
 	}
 }
 
@@ -446,9 +384,7 @@ public void OnClientDisconnect(int client)
 
 public Action Timer_Announce(Handle mTimer) //Broadcasts
 {
-	//static int announcecount = -1;
-	//announcecount++;
-	int RandAnnounce = (GetRandomInt(1, 9));
+	int RandAnnounce = (GetRandomInt(0, 5));
 	if (Announce > 1.0 && g_bEnabled)
 	{
 		switch (RandAnnounce)
@@ -456,7 +392,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 			case 1: //Scout
 			{
 				if (ScoutUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && ScoutUse != 0)
 				{
@@ -476,27 +412,21 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 			case 2: //Soldier
 			{
 				if (SoldierUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && SoldierUse != 0)
 				{
-					if (SoldierUse == -1)
-						CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can taunt with their stock Shovel or reskins while raged to unrage themselves. Also makes them taunt {unique}%.2fx{default} faster.", SoldierVar);
-					else
-						CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can taunt with their stock Shovel or reskins while raged to unrage themselves up to {unique}%i{default} times per life. Also makes them taunt {unique}%.2fx{default} faster.", SoldierUse, SoldierVar);
+					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2f{default} faster by holding out their stock shovel or reskins.", SoldierVar);
 				}
 				else if (SoldierUse != 0)
 				{
-					if (SoldierUse == -1)
-						CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can taunt with their stock Shovel while raged to unrage themselves. Also makes them taunt {unique}%.2fx{default} faster.", SoldierVar);
-					else
-						CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can taunt with their stock Shovel while raged to unrage themselves up to {unique}%i{default} times per life. Also makes them taunt {unique}%.2fx{default} faster.", SoldierUse, SoldierVar);
+					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2f{default} faster by holding out their stock Shovel.", SoldierVar);
 				}
 			}
 			case 3: //Demoman
 			{
 				if (DemoUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && DemoUse != 0)
 				{
@@ -516,27 +446,27 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 			case 4: //Heavy
 			{
 				if (HeavyUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && HeavyUse != 0)
 				{
 					if (HeavyUse == -1)
-						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists or reskins for {unique}%.2fHU{default} extra knockback force.", HeavyVar);
+						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists or reskins for {unique}%.0fHU{default} extra knockback force.", HeavyVar);
 					else
-						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists or reskins for {unique}%.2fHU{default} extra knockback force up to {unique}%i{default} times per life.", HeavyVar, HeavyUse);
+						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists or reskins for {unique}%.0fHU{default} extra knockback force up to {unique}%i{default} times per life.", HeavyVar, HeavyUse);
 				}
 				else if (HeavyUse != 0)
 				{
 					if (HeavyUse == -1)
-						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists for {unique}%.2fHU{default} extra knockback force.", HeavyVar);
+						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists for {unique}%.0fHU{default} extra knockback force.", HeavyVar);
 					else
-						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists for {unique}%.2fHU{default} extra knockback force up to {unique}%i{default} times per life.", HeavyVar, HeavyUse);
+						CPrintToChatAll("{olive}[VSH]{tomato} Heavies{default} can punch Hale with their stock Fists for {unique}%.0fHU{default} extra knockback force up to {unique}%i{default} times per life.", HeavyVar, HeavyUse);
 				}
 			}
 			case 5: //Engineer
 			{
 				if (EngineerUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && EngineerUse != 0)
 				{
@@ -553,10 +483,10 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 						CPrintToChatAll("{olive}[VSH]{tomato} Engineers{default} can taunt with their stock Wrench to gain {unique}%i{default} metal up to {unique}%i{default} times per life.", EngineerVar, EngineerUse);
 				}
 			}
-			case 6: //Medic
+			/*case 6: //Medic
 			{
 				if (MedicUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 
 				if (ReskinsEnabled && MedicUse != 0)
 				{
@@ -572,13 +502,13 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 					else
 						CPrintToChatAll("{olive}[VSH]{tomato} Medics{default} can revive up to {unique}%i{default} team-mates at once up to {unique}%i{default} times per life by taunting with their stock Bonesaw out.", MedicVar, MedicUse);
 				}
-			}
-			case 7: //Sniper
+			}*/
+			/*case 7: //Sniper
 			{
 				//announcecount = 0;
 				
 				if (SniperUse == 0)
-					RequestFrame(Timer_Reroll);
+					RequestFrame(Frame_Reroll);
 				
 				if (ReskinsEnabled && SniperUse != 0)
 				{
@@ -588,13 +518,13 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 						CPrintToChatAll("{olive}[VSH]{tomato} Snipers{default} can use their stock Kukri or reskins to outline Hale on hit for {unique}%.2f{default} seconds up to {unique}%i{default} times per life.", SniperVar, SniperUse);
 				}
 				else if (SniperUse != 0)
-				{
+				{CPrintToChat(client, "You have {unique}%i{default} uses left!", MeleeUses[client]);
 					if (SniperUse == -1)
 						CPrintToChatAll("{olive}[VSH]{tomato} Snipers{default} can use their stock Kukri to outline Hale on hit for {unique}%.2f{default} seconds.", SniperVar);
 					else
 						CPrintToChatAll("{olive}[VSH]{tomato} Snipers{default} can use their stock Kukri to outline Hale on hit for {unique}%.2f{default} seconds up to {unique}%i{default} times per life.", SniperVar, SniperUse);
 				}
-			}
+			}*/
 			default:
 			{
 				if (ReskinsEnabled)
@@ -606,11 +536,15 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 	}
 }
 
-public Timer_Reroll(any:data) //Re-roll for announcements
+public Frame_Reroll(any data) //Re-roll for announcements if one selected was for a disabled feature
 {
 	CreateTimer(0.1, Timer_Announce, TIMER_FLAG_NO_MAPCHANGE);
 }
 
+/*
+	Following stocks taken from VSH.
+	Credit to their original creators.
+*/
 stock int TF2_GetMetal(int client)
 {
 	if (!IsValidClient(client) || !IsPlayerAlive(client))
@@ -626,7 +560,7 @@ stock void TF2_SetMetal(int client, int metal)
 }
 
 /*
-	Player health adder
+	Player health adder.
 	By: Chdata
 */
 stock void AddPlayerHealth(int iClient, int iAdd, int iOverheal = 0, bool bStaticMax = false)
@@ -651,18 +585,3 @@ stock bool IsValidClient(int iClient)
 {
 	return (0 < iClient && iClient <= MaxClients && IsClientInGame(iClient));
 }
-
-/*stock GetPlayerCount()
-{
-	new iCount, i; iCount = 0;
-
-	for( i = 1; i <= MaxClients; i++ )
-	{
-		if(IsClientInGame(i))
-		{
-			iCount++;
-		}
-	}
-
-	return iCount;
-}*/
