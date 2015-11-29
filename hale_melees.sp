@@ -442,11 +442,11 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 
 				if (ReskinsEnabled && SoldierUse != 0)
 				{
-					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2f{default} faster by holding out their stock shovel or reskins.", SoldierVar);
+					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2fx{default} faster by holding out their stock shovel or reskins.", SoldierVar);
 				}
 				else if (SoldierUse != 0)
 				{
-					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2f{default} faster by holding out their stock Shovel.", SoldierVar);
+					CPrintToChatAll("{olive}[VSH]{tomato} Soldiers{default} can help Medics build uber {unique}%.2fx{default} faster by holding out their stock Shovel.", SoldierVar);
 				}
 			}
 			case 3: //Demoman
