@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.2",
+	version = "0.3",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -69,7 +69,7 @@ public void OnPluginStart()
 		MeleeUses[client] = 0;
 		if (IsClientInGame(client)) // IsValidClient(client, false)
 		{
-			SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+			SDKHook(client, SDKHook_OnTakeDamageAlive, OnTakeDamageAlive);
 		}
 	}
 	HookEvent("player_spawn", event_player_spawn);
@@ -128,7 +128,7 @@ public void OnConfigsExecuted()
 public void OnClientPostAdminCheck(int client)
 {
 	MeleeUses[client] = 0;
-	SDKHook(client, SDKHook_OnTakeDamage, OnTakeDamage);
+	SDKHook(client, SDKHook_OnTakeDamageAlive, OnTakeDamageAlive);
 }
 
 public Action event_player_spawn(Event event, const char[] name, bool dontBroadcast)
@@ -141,24 +141,47 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 		if (TF2_GetPlayerClass(client) == TFClass_Scout)
 		{
 			MeleeUses[client] = ScoutUse;
+			if (MeleeUses[client] == -1)
+				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
+			else
+				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_Soldier)
 		{
 			MeleeUses[client] = SoldierUse;
 			if (MeleeUses[client] > 0)
+			{
+				CPrintToChat(client, "Your stock melee enhancement is active this life!");
 				RequestFrame(Frame_Spawn, client);
+			}
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+		{
 			MeleeUses[client] = DemoUse;
+			if (MeleeUses[client] == -1)
+				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
+			else
+				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
+		}
 		if (TF2_GetPlayerClass(client) == TFClass_Heavy)
 		{
 			MeleeUses[client] = HeavyUse;
 			if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
+			{
+				if (MeleeUses[client] == -1)
+					CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
+				else
+					CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 				RequestFrame(Frame_Spawn, client);
+			}
 		}
 		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
 			MeleeUses[client] = EngineerUse;
+			if (MeleeUses[client] == -1)
+				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
+			else
+				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
 		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
 			MeleeUses[client] = MedicUse;*/
@@ -218,24 +241,23 @@ public Action event_player_death(Event event, const char[] name, bool dontBroadc
 	return Plugin_Continue;
 }
 
-public Action OnTakeDamage(int client, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
+public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float &damage, int &damagetype, int &weapon, float damageForce[3], float damagePosition[3], int damagecustom)
 {
 	if (!IsEnabled || VSH_GetRoundState() != 1)
 		return Plugin_Continue;
-	
+
+	if (client == attacker)
+		return Plugin_Continue;
+		
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	
+	if (GetClientTeam(client) != HaleTeam)
+		return Plugin_Continue;
+
 	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
 	int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
 	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
 	
 	if (weapon != meleeweapon)
-		return Plugin_Continue;
-	
-	if (GetClientTeam(client) != HaleTeam)
-		return Plugin_Continue;
-
-	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
 		return Plugin_Continue;
 
 	int reskin = -1;
@@ -384,11 +406,15 @@ public void OnClientDisconnect(int client)
 
 public Action Timer_Announce(Handle mTimer) //Broadcasts
 {
-	int RandAnnounce = (GetRandomInt(0, 5));
+	int RandAnnounce = (GetRandomInt(0, 6));
 	if (Announce > 1.0 && g_bEnabled)
 	{
 		switch (RandAnnounce)
 		{
+			case 0: //Credits
+			{
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.3{default} by {unique}Starblaster64{default}.");
+			}
 			case 1: //Scout
 			{
 				if (ScoutUse == 0)
