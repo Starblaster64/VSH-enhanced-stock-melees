@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.3",
+	version = "0.4",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -138,7 +138,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 	MeleeUses[client] = 0;
 	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam)
 	{
-		if (TF2_GetPlayerClass(client) == TFClass_Scout)
+		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && GetMelee(client) == 0 && TF2_GetPlayerClass(client) == TFClass_Scout)
 		{
 			MeleeUses[client] = ScoutUse;
 			if (MeleeUses[client] == -1)
@@ -146,7 +146,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 			else
 				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_Soldier)
+		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Soldier)
 		{
 			MeleeUses[client] = SoldierUse;
 			if (MeleeUses[client] > 0)
@@ -155,7 +155,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 				RequestFrame(Frame_Spawn, client);
 			}
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_DemoMan)
 		{
 			MeleeUses[client] = DemoUse;
 			if (MeleeUses[client] == -1)
@@ -163,7 +163,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 			else
 				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_Heavy)
+		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Heavy)
 		{
 			MeleeUses[client] = HeavyUse;
 			if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
@@ -175,7 +175,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 				RequestFrame(Frame_Spawn, client);
 			}
 		}
-		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
+		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
 			MeleeUses[client] = EngineerUse;
 			if (MeleeUses[client] == -1)
@@ -183,9 +183,9 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 			else
 				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
-		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
+		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Medic)
 			MeleeUses[client] = MedicUse;*/
-		/*if (TF2_GetPlayerClass(client) == TFClass_Sniper)
+		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Sniper)
 			MeleeUses[client] = SniperUse;*/
 		/*else
 			MeleeUses[client] = 0; //Players who spawn mid-round will not recieve enhancements.*/
@@ -254,38 +254,15 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 		return Plugin_Continue;
 
 	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
-	int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
+	//int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
 	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
 	
-	if (weapon != meleeweapon)
+	if (!GetMeleeActive(attacker))
 		return Plugin_Continue;
-
-	int reskin = -1;
-
-	if (wepindex == 1127 || //Reskins
-		wepindex == 1123 ||
-		wepindex == 1071 ||
-		wepindex == 1013 ||
-		wepindex == 954 ||
-		wepindex == 939 ||
-		wepindex == 880 ||
-		wepindex == 474 ||
-		wepindex == 423 ||
-		wepindex == 264 ||
-		wepindex == 587)
-		reskin = 1;
-
-	if (wepindex == 0 || //Stock
-		wepindex == 190 ||
-		wepindex == 5 ||
-		wepindex == 195 ||
-		wepindex == 3 ||
-		wepindex == 193)
-		reskin = 0;
-
+	
 	if (TF2_GetPlayerClass(attacker) == TFClass_Scout)
 	{
-		if (reskin == 0 || (ReskinsEnabled && reskin != -1))
+		if (GetMelee(attacker) == 0 || (ReskinsEnabled && GetMelee(attacker) != -1))
 		{
 			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
 			{
@@ -301,7 +278,7 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 	}
 	if (TF2_GetPlayerClass(attacker) == TFClass_Heavy)
 	{
-		if (reskin == 0 || (ReskinsEnabled && reskin != -1))
+		if (GetMelee(attacker) == 0 || (ReskinsEnabled && GetMelee(attacker) != -1))
 		{
 			if (MeleeUses[attacker] == 0)
 			{
@@ -327,26 +304,10 @@ public Action OnPlayerTaunt(int client, int args)
 	if (!IsPlayerAlive(client) || GetClientTeam(client) == VSH_GetSaxtonHaleTeam())
 		return Plugin_Continue;
 	
-	int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	if (ActiveWeapon == -1)
+	if (!GetMeleeActive(client))
 		return Plugin_Continue;
-	
-	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");
-	int reskin = -1;
-	
-	if (wepindex == 1 || wepindex == 6 || wepindex == 7 || wepindex == 8 || //Stock for Demo/Medic/Soldier
-		wepindex == 191 || wepindex == 196 || wepindex == 197 || wepindex == 198) //Strange Stock
-			reskin = 0;
-		
-	if (wepindex == 609 || //Demo Reskins
-		wepindex == 196 || wepindex == 662 || wepindex == 795 || wepindex == 804 || wepindex == 884 || 
-		wepindex == 893 || wepindex == 902 || wepindex == 911 || wepindex == 960 || wepindex == 969 || //Engineer Reskins
-		wepindex == 1143 || //Medic Reskins
-		wepindex == 264 || wepindex == 423 || wepindex == 474 || wepindex == 880 || wepindex == 939 || 
-		wepindex == 954 || wepindex == 1013 || wepindex == 1071 || wepindex == 1123 || wepindex == 1127) //Multi-class Reskins
-			reskin = 1;
 			
-	if (reskin == 0 || (ReskinsEnabled && reskin != -1))
+	if (GetMelee(client) == 0 || (ReskinsEnabled && GetMelee(client) != -1))
 	{
 		if (!TF2_IsPlayerInCondition(client, TFCond_Taunting))
 			RequestFrame(Frame_TauntBonus, client);
@@ -413,7 +374,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 		{
 			case 0: //Credits
 			{
-				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.3{default} by {unique}Starblaster64{default}.");
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4{default} by {unique}Starblaster64{default}.");
 			}
 			case 1: //Scout
 			{
@@ -600,6 +561,81 @@ stock void AddPlayerHealth(int iClient, int iAdd, int iOverheal = 0, bool bStati
 		SetEntityHealth(iClient, iNewHealth);
 	}
 }
+
+stock int GetMeleeActive(int client)
+{
+	int melee = -1;
+	if (GetMelee(client) > -1)
+	{
+		int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (ActiveWeapon != -1)
+		{
+			int MeleeIndex = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+			if (ActiveWeapon == MeleeIndex)
+				return melee = 1;
+		}
+		melee = 0;
+	}
+				
+	return melee;
+}
+
+stock int GetMelee(int client)
+{
+	/*int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (ActiveWeapon == -1)
+		return Plugin_Continue;
+	
+	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");*/
+	
+	int wepindex = GetIndexOfWeaponSlot(client, TFWeaponSlot_Melee);
+	int reskin = -1;
+	
+	if (wepindex == 0 || 
+		wepindex == 1 || 
+		wepindex == 3 || 
+		wepindex == 5 || 
+		wepindex == 6 || 
+		wepindex == 7 || 
+		wepindex == 8 ||
+		wepindex == 190 || 
+		wepindex == 191 || 
+		wepindex == 193 || 
+		wepindex == 195 || 
+		wepindex == 196 || 
+		wepindex == 197 || 
+		wepindex == 198)
+			reskin = 0;
+		
+	if (wepindex == 609 ||
+		wepindex == 587 || 
+		wepindex == 660 || 
+		wepindex == 196 || 
+		wepindex == 662 || 
+		wepindex == 795 || 
+		wepindex == 804 || 
+		wepindex == 884 || 
+		wepindex == 893 || 
+		wepindex == 902 || 
+		wepindex == 911 || 
+		wepindex == 960 || 
+		wepindex == 969 ||
+		wepindex == 1143 ||
+		wepindex == 264 || 
+		wepindex == 423 || 
+		wepindex == 474 || 
+		wepindex == 880 || 
+		wepindex == 939 || 
+		wepindex == 954 || 
+		wepindex == 1013 || 
+		wepindex == 1071 || 
+		wepindex == 1123 || 
+		wepindex == 1127)
+			reskin = 1;
+			
+	return reskin;
+}
+
 
 stock int GetIndexOfWeaponSlot(int client, int slot)
 {
