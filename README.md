@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/Starblaster64/VSH-enhanced-stock-melees.png?label=ready&title=Ready)](https://waffle.io/Starblaster64/VSH-enhanced-stock-melees)
 # [VSH] Enhanced Stock Melees
 Adds minor bonuses to the stock melee weapons in VSH to make them not completely useless. Also allows reskins of stock melee weapons to recieve the same enhancements by way of a CVAR.
 
