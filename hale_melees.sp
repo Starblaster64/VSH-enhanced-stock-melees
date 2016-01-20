@@ -253,6 +253,9 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 	if (GetClientTeam(client) != HaleTeam)
 		return Plugin_Continue;
 
+	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
+		return Plugin_Continue;
+		
 	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
 	//int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
 	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
