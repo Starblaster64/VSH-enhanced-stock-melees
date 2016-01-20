@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.4",
+	version = "0.4a",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -377,7 +377,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 		{
 			case 0: //Credits
 			{
-				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4{default} by {unique}Starblaster64{default}.");
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4a{default} by {unique}Starblaster64{default}.");
 			}
 			case 1: //Scout
 			{
