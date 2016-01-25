@@ -245,14 +245,14 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 {
 	if (!IsEnabled || VSH_GetRoundState() != 1)
 		return Plugin_Continue;
-
-	if (client == attacker)
-		return Plugin_Continue;
 		
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	if (GetClientTeam(client) != HaleTeam)
 		return Plugin_Continue;
 
+	if (!IsValidClient(attacker) || !IsValidClient(client))
+		return Plugin_Continue;
+	
 	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
 		return Plugin_Continue;
 		
