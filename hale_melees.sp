@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.4a",
+	version = "0.4b",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -304,7 +304,7 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 
 public Action OnPlayerTaunt(int client, int args)
 {
-	if (!IsPlayerAlive(client) || GetClientTeam(client) == VSH_GetSaxtonHaleTeam())
+	if (!IsPlayerAlive(client) || !IsValidClient(client) || GetClientTeam(client) == VSH_GetSaxtonHaleTeam())
 		return Plugin_Continue;
 	
 	if (!GetMeleeActive(client))
@@ -321,6 +321,10 @@ public Action OnPlayerTaunt(int client, int args)
 
 public Action Timer_TauntBonusDemo(Handle mTimer, any client)
 {
+	int HaleTeam = VSH_GetSaxtonHaleTeam();
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
+		return Plugin_Continue;
+
 	if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
 	{
 		TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
@@ -330,10 +334,15 @@ public Action Timer_TauntBonusDemo(Handle mTimer, any client)
 			CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
 		}
 	}
+	return Plugin_Continue;
 }
 
 public Action Timer_TauntBonusEngineer(Handle mTimer, any client) //Broadcasts
 {
+	int HaleTeam = VSH_GetSaxtonHaleTeam();
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
+		return Plugin_Continue;
+
 	int metal = TF2_GetMetal(client);
 	TF2_SetMetal(client, metal + EngineerVar);
 	if (MeleeUses[client] != -1)
@@ -341,6 +350,7 @@ public Action Timer_TauntBonusEngineer(Handle mTimer, any client) //Broadcasts
 		MeleeUses[client] -= 1;
 		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
 	}
+	return Plugin_Continue;
 }
 
 public Frame_TauntBonus(any clientid)
@@ -377,7 +387,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 		{
 			case 0: //Credits
 			{
-				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4a{default} by {unique}Starblaster64{default}.");
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4b{default} by {unique}Starblaster64{default}.");
 			}
 			case 1: //Scout
 			{
