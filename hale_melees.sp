@@ -527,6 +527,83 @@ public Frame_Reroll(any data) //Re-roll for announcements if one selected was fo
 	CreateTimer(0.1, Timer_Announce, TIMER_FLAG_NO_MAPCHANGE);
 }
 
+stock void AddMeleeUses(int client, int uses)
+{
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
+		return;
+
+	if (MeleeUses[client] != -1)
+	{
+		MeleeUses[client] += uses;
+		if (MeleeUses[client] < 0)
+			MeleeUses[client] = 0;
+
+		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
+	}
+}
+
+stock int GetMelee(int client)
+{
+	/*int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (ActiveWeapon == -1)
+		return Plugin_Continue;
+	
+	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");*/
+	
+	int wepindex = GetIndexOfWeaponSlot(client, TFWeaponSlot_Melee);
+	int reskin = -1; //Non-stock/reskin weapon
+	
+	if ((wepindex >= 0 && wepindex <= 8) || (wepindex >= 190 && wepindex <= 198))
+		reskin = 0; //Stock weapon
+		
+	if (wepindex == 609 ||
+		wepindex == 587 || 
+		wepindex == 660 || 
+		wepindex == 196 || 
+		wepindex == 662 || 
+		wepindex == 795 || 
+		wepindex == 804 || 
+		wepindex == 884 || 
+		wepindex == 893 || 
+		wepindex == 902 || 
+		wepindex == 911 || 
+		wepindex == 960 || 
+		wepindex == 969 ||
+		wepindex == 1143 ||
+		wepindex == 264 || 
+		wepindex == 423 || 
+		wepindex == 474 || 
+		wepindex == 880 || 
+		wepindex == 939 || 
+		wepindex == 954 || 
+		wepindex == 1013 || 
+		wepindex == 1071 || 
+		wepindex == 1123 || 
+		wepindex == 1127 ||
+		wepindex == 30667)
+			reskin = 1; //Reskin of stock weapon
+			
+	return reskin;
+}
+
+stock int GetMeleeActive(int client)
+{
+	int melee = -1; //Melee weapon is not active/not stock
+	if (GetMelee(client) > -1)
+	{
+		int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (ActiveWeapon != -1)
+		{
+			int MeleeIndex = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+			if (ActiveWeapon == MeleeIndex)
+				return melee = 1; //Melee weapon is active and stock/reskin
+		}
+		melee = 0; //Melee weapon is stock/reskin but not active
+	}
+				
+	return melee;
+}
+
 /*
 	Following stocks taken from VSH.
 	Credit to their original creators.
@@ -560,81 +637,6 @@ stock void AddPlayerHealth(int iClient, int iAdd, int iOverheal = 0, bool bStati
 		SetEntityHealth(iClient, iNewHealth);
 	}
 }
-
-stock int GetMeleeActive(int client)
-{
-	int melee = -1;
-	if (GetMelee(client) > -1)
-	{
-		int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		if (ActiveWeapon != -1)
-		{
-			int MeleeIndex = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
-			if (ActiveWeapon == MeleeIndex)
-				return melee = 1;
-		}
-		melee = 0;
-	}
-				
-	return melee;
-}
-
-stock int GetMelee(int client)
-{
-	/*int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	if (ActiveWeapon == -1)
-		return Plugin_Continue;
-	
-	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");*/
-	
-	int wepindex = GetIndexOfWeaponSlot(client, TFWeaponSlot_Melee);
-	int reskin = -1;
-	
-	if (wepindex == 0 || 
-		wepindex == 1 || 
-		wepindex == 3 || 
-		wepindex == 5 || 
-		wepindex == 6 || 
-		wepindex == 7 || 
-		wepindex == 8 ||
-		wepindex == 190 || 
-		wepindex == 191 || 
-		wepindex == 193 || 
-		wepindex == 195 || 
-		wepindex == 196 || 
-		wepindex == 197 || 
-		wepindex == 198)
-			reskin = 0;
-		
-	if (wepindex == 609 ||
-		wepindex == 587 || 
-		wepindex == 660 || 
-		wepindex == 196 || 
-		wepindex == 662 || 
-		wepindex == 795 || 
-		wepindex == 804 || 
-		wepindex == 884 || 
-		wepindex == 893 || 
-		wepindex == 902 || 
-		wepindex == 911 || 
-		wepindex == 960 || 
-		wepindex == 969 ||
-		wepindex == 1143 ||
-		wepindex == 264 || 
-		wepindex == 423 || 
-		wepindex == 474 || 
-		wepindex == 880 || 
-		wepindex == 939 || 
-		wepindex == 954 || 
-		wepindex == 1013 || 
-		wepindex == 1071 || 
-		wepindex == 1123 || 
-		wepindex == 1127)
-			reskin = 1;
-			
-	return reskin;
-}
-
 
 stock int GetIndexOfWeaponSlot(int client, int slot)
 {
