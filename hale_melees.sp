@@ -194,7 +194,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 
 public Frame_Spawn(any client)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client))
+	if (IsClientInGame(client) && IsPlayerAlive(client) && MeleeUses[client] != 0)
 	{
 		int weapon = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 		int swepindex = (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"));
@@ -212,7 +212,7 @@ public Frame_Spawn(any client)
 			}
 			case 1127, 1123, 1071, 1013, 954, 939, 880, 474, 423, 264, 587: //Reskins
 			{
-				if (ReskinsEnabled)
+				if (ReskinsEnabled) //TODO: Move this out of the current Switch and use GetMelee instead.
 				{
 					if (TF2_GetPlayerClass(client) == TFClass_Heavy)
 					{
@@ -244,24 +244,24 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 {
 	if (!IsEnabled || VSH_GetRoundState() != 1)
 		return Plugin_Continue;
-		
+
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	if (GetClientTeam(client) != HaleTeam)
 		return Plugin_Continue;
 
 	if (!IsValidClient(attacker) || !IsValidClient(client))
 		return Plugin_Continue;
-	
+
 	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
 		return Plugin_Continue;
-		
+
 	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
 	//int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
 	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
-	
+
 	if (!GetMeleeActive(attacker))
 		return Plugin_Continue;
-	
+
 	if (TF2_GetPlayerClass(attacker) == TFClass_Scout)
 	{
 		if (GetMelee(attacker) == 0 || (ReskinsEnabled && GetMelee(attacker) != -1))
@@ -269,11 +269,8 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
 			{
 				TF2_AddCondition(attacker, TFCond_Bonked, ScoutVar);
-				if (MeleeUses[attacker] != -1)
-				{
-					MeleeUses[attacker] -= 1;
-					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
-				}
+				AddMeleeUses(attacker, -1);
+
 				return Plugin_Changed;
 			}
 		}
@@ -287,13 +284,10 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 				TF2Attrib_RemoveByDefIndex(meleeweapon, 215);
 				TF2Attrib_RemoveByDefIndex(meleeweapon, 216);
 			}
-			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
+			if (MeleeUses[attacker] > 0)
 			{
-				if (MeleeUses[attacker] != -1)
-				{
-					MeleeUses[attacker] -= 1;
-					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
-				}
+				AddMeleeUses(attacker, -1);
+
 				return Plugin_Changed;
 			}
 		}
@@ -305,16 +299,16 @@ public Action OnPlayerTaunt(int client, int args)
 {
 	if (!IsPlayerAlive(client) || !IsValidClient(client) || GetClientTeam(client) == VSH_GetSaxtonHaleTeam())
 		return Plugin_Continue;
-	
+
 	if (!GetMeleeActive(client))
 		return Plugin_Continue;
-			
+
 	if (GetMelee(client) == 0 || (ReskinsEnabled && GetMelee(client) != -1))
 	{
 		if (!TF2_IsPlayerInCondition(client, TFCond_Taunting))
-			RequestFrame(Frame_TauntBonus, client);
+			RequestFrame(Frame_TauntBonus, client); //Should I just call the timer from here?
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -522,7 +516,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 	}
 }
 
-public Frame_Reroll(any data) //Re-roll for announcements if one selected was for a disabled feature
+public Frame_Reroll(any data) //Re-roll for announcements if the one selected was for a disabled feature
 {
 	CreateTimer(0.1, Timer_Announce, TIMER_FLAG_NO_MAPCHANGE);
 }
