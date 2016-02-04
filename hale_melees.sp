@@ -136,53 +136,52 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	MeleeUses[client] = 0;
-	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam)
+	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam && IsValidClient(client))
 	{
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && GetMelee(client) == 0 && TF2_GetPlayerClass(client) == TFClass_Scout)
+		if (GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled))
 		{
-			MeleeUses[client] = ScoutUse;
-			if (MeleeUses[client] == -1)
-				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-			else
-				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Soldier)
-		{
-			MeleeUses[client] = SoldierUse;
-			if (MeleeUses[client] > 0)
+			switch (TF2_GetPlayerClass(client))
 			{
-				CPrintToChat(client, "Your stock melee enhancement is active this life!");
-				RequestFrame(Frame_Spawn, client);
+				case TFClass_Scout:
+				{
+					MeleeUses[client] = ScoutUse;
+				}
+				case TFClass_Soldier:
+				{
+					MeleeUses[client] = SoldierUse;
+					if (MeleeUses[client] > 0)
+					{
+						CPrintToChat(client, "Your passive stock melee enhancement is active this life!");
+						RequestFrame(Frame_Spawn, client);
+						return Plugin_Continue;
+					}
+				}
+				case TFClass_DemoMan:
+				{
+					MeleeUses[client] = DemoUse;
+				}
+				case TFClass_Heavy:
+				{
+					MeleeUses[client] = HeavyUse;
+					RequestFrame(Frame_Spawn, client);
+				}
+				case TFClass_Engineer:
+				{
+					MeleeUses[client] = EngineerUse;
+				}
+				default:
+				{
+					MeleeUses[client] = 0;
+				}
 			}
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_DemoMan)
-		{
-			MeleeUses[client] = DemoUse;
+			if (MeleeUses[client] == 0)
+				return Plugin_Continue;
 			if (MeleeUses[client] == -1)
 				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
 			else
 				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Heavy)
-		{
-			MeleeUses[client] = HeavyUse;
-			if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
-			{
-				if (MeleeUses[client] == -1)
-					CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-				else
-					CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-				RequestFrame(Frame_Spawn, client);
-			}
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Engineer)
-		{
-			MeleeUses[client] = EngineerUse;
-			if (MeleeUses[client] == -1)
-				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-			else
-				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-		}
+
 		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Medic)
 			MeleeUses[client] = MedicUse;*/
 		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Sniper)
