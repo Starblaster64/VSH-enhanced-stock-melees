@@ -331,7 +331,7 @@ public Frame_TauntBonus(any clientid)
 public Action Timer_TauntBonus(Handle mTimer, any client)
 {
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam || !TF2_IsPlayerInCondition(client, TFCond_Taunting))
 		return Plugin_Continue;
 
 	if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
