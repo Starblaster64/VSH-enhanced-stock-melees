@@ -138,7 +138,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 	MeleeUses[client] = 0;
 	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam && IsValidClient(client))
 	{
-		if (GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled))
+		if (GetMelee(client) == 0 || (GetMelee(client) != -1 && ReskinsEnabled))
 		{
 			switch (TF2_GetPlayerClass(client))
 			{
@@ -575,7 +575,16 @@ stock int GetMelee(int client)
 		wepindex == 1123 || 
 		wepindex == 1127 ||
 		wepindex == 30667)
-			reskin = 1; //Reskin of stock weapon
+		reskin = 1; //Reskin of stock weapon
+
+	if (wepindex == 15073 || //Wrench weapon skins
+		wepindex == 15074 ||
+		wepindex == 15075 ||
+		wepindex == 15114 ||
+		wepindex == 15139 ||
+		wepindex == 15140 ||
+		wepindex == 15156)
+		reskin = 2; //Weapon skin reskins
 			
 	return reskin;
 }
