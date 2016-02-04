@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.4b",
+	version = "0.5",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
