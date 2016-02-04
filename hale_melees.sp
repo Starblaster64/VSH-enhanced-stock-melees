@@ -16,7 +16,7 @@ public Plugin myinfo =
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.4b",
+	version = "0.5",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -136,53 +136,52 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	MeleeUses[client] = 0;
-	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam)
+	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam && IsValidClient(client))
 	{
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && GetMelee(client) == 0 && TF2_GetPlayerClass(client) == TFClass_Scout)
+		if (GetMelee(client) == 0 || (GetMelee(client) != -1 && ReskinsEnabled))
 		{
-			MeleeUses[client] = ScoutUse;
-			if (MeleeUses[client] == -1)
-				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-			else
-				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Soldier)
-		{
-			MeleeUses[client] = SoldierUse;
-			if (MeleeUses[client] > 0)
+			switch (TF2_GetPlayerClass(client))
 			{
-				CPrintToChat(client, "Your stock melee enhancement is active this life!");
-				RequestFrame(Frame_Spawn, client);
+				case TFClass_Scout:
+				{
+					MeleeUses[client] = ScoutUse;
+				}
+				case TFClass_Soldier:
+				{
+					MeleeUses[client] = SoldierUse;
+					if (MeleeUses[client] > 0)
+					{
+						CPrintToChat(client, "Your passive stock melee enhancement is active this life!");
+						RequestFrame(Frame_Spawn, client);
+						return Plugin_Continue;
+					}
+				}
+				case TFClass_DemoMan:
+				{
+					MeleeUses[client] = DemoUse;
+				}
+				case TFClass_Heavy:
+				{
+					MeleeUses[client] = HeavyUse;
+					RequestFrame(Frame_Spawn, client);
+				}
+				case TFClass_Engineer:
+				{
+					MeleeUses[client] = EngineerUse;
+				}
+				default:
+				{
+					MeleeUses[client] = 0;
+				}
 			}
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_DemoMan)
-		{
-			MeleeUses[client] = DemoUse;
+			if (MeleeUses[client] == 0)
+				return Plugin_Continue;
 			if (MeleeUses[client] == -1)
 				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
 			else
 				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
 		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Heavy)
-		{
-			MeleeUses[client] = HeavyUse;
-			if (MeleeUses[client] > 0 || MeleeUses[client] == -1)
-			{
-				if (MeleeUses[client] == -1)
-					CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-				else
-					CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-				RequestFrame(Frame_Spawn, client);
-			}
-		}
-		if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Engineer)
-		{
-			MeleeUses[client] = EngineerUse;
-			if (MeleeUses[client] == -1)
-				CPrintToChat(client, "You have {unique}infinite{default} stock melee uses this life!");
-			else
-				CPrintToChat(client, "You have {unique}%i{default} stock melee uses this life!", MeleeUses[client]);
-		}
+
 		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Medic)
 			MeleeUses[client] = MedicUse;*/
 		/*if ((GetMelee(client) == 0 || (GetMelee(client) == 1 && ReskinsEnabled)) && TF2_GetPlayerClass(client) == TFClass_Sniper)
@@ -195,7 +194,7 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 
 public Frame_Spawn(any client)
 {
-	if (IsClientInGame(client) && IsPlayerAlive(client))
+	if (IsClientInGame(client) && IsPlayerAlive(client) && MeleeUses[client] != 0)
 	{
 		int weapon = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 		int swepindex = (GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex"));
@@ -213,7 +212,7 @@ public Frame_Spawn(any client)
 			}
 			case 1127, 1123, 1071, 1013, 954, 939, 880, 474, 423, 264, 587: //Reskins
 			{
-				if (ReskinsEnabled)
+				if (ReskinsEnabled) //TODO: Move this out of the current Switch and use GetMelee instead.
 				{
 					if (TF2_GetPlayerClass(client) == TFClass_Heavy)
 					{
@@ -245,24 +244,24 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 {
 	if (!IsEnabled || VSH_GetRoundState() != 1)
 		return Plugin_Continue;
-		
+
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	if (GetClientTeam(client) != HaleTeam)
 		return Plugin_Continue;
 
 	if (!IsValidClient(attacker) || !IsValidClient(client))
 		return Plugin_Continue;
-	
+
 	if (!IsPlayerAlive(attacker) || !IsPlayerAlive(client) || client == attacker)
 		return Plugin_Continue;
-		
+
 	//int meleeindex = GetIndexOfWeaponSlot(attacker, TFWeaponSlot_Melee);
 	//int wepindex = (IsValidEntity(weapon) && weapon > MaxClients ? GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex") : -1);
 	int meleeweapon = GetPlayerWeaponSlot(attacker, TFWeaponSlot_Melee);
-	
+
 	if (!GetMeleeActive(attacker))
 		return Plugin_Continue;
-	
+
 	if (TF2_GetPlayerClass(attacker) == TFClass_Scout)
 	{
 		if (GetMelee(attacker) == 0 || (ReskinsEnabled && GetMelee(attacker) != -1))
@@ -270,11 +269,8 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
 			{
 				TF2_AddCondition(attacker, TFCond_Bonked, ScoutVar);
-				if (MeleeUses[attacker] != -1)
-				{
-					MeleeUses[attacker] -= 1;
-					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
-				}
+				AddMeleeUses(attacker, -1);
+
 				return Plugin_Changed;
 			}
 		}
@@ -288,13 +284,10 @@ public Action OnTakeDamageAlive(int client, int &attacker, int &inflictor, float
 				TF2Attrib_RemoveByDefIndex(meleeweapon, 215);
 				TF2Attrib_RemoveByDefIndex(meleeweapon, 216);
 			}
-			if (MeleeUses[attacker] > 0 || MeleeUses[attacker] == -1)
+			if (MeleeUses[attacker] > 0)
 			{
-				if (MeleeUses[attacker] != -1)
-				{
-					MeleeUses[attacker] -= 1;
-					CPrintToChat(attacker, "You have {unique}%i{default} melee uses left!", MeleeUses[attacker]);
-				}
+				AddMeleeUses(attacker, -1);
+
 				return Plugin_Changed;
 			}
 		}
@@ -306,50 +299,16 @@ public Action OnPlayerTaunt(int client, int args)
 {
 	if (!IsPlayerAlive(client) || !IsValidClient(client) || GetClientTeam(client) == VSH_GetSaxtonHaleTeam())
 		return Plugin_Continue;
-	
+
 	if (!GetMeleeActive(client))
 		return Plugin_Continue;
-			
+
 	if (GetMelee(client) == 0 || (ReskinsEnabled && GetMelee(client) != -1))
 	{
 		if (!TF2_IsPlayerInCondition(client, TFCond_Taunting))
-			RequestFrame(Frame_TauntBonus, client);
+			RequestFrame(Frame_TauntBonus, client); //Should I just call the timer from here?
 	}
-	
-	return Plugin_Continue;
-}
 
-public Action Timer_TauntBonusDemo(Handle mTimer, any client)
-{
-	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
-		return Plugin_Continue;
-
-	if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
-	{
-		TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
-		if (MeleeUses[client] != -1)
-		{
-			MeleeUses[client] -= 1;
-			CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
-		}
-	}
-	return Plugin_Continue;
-}
-
-public Action Timer_TauntBonusEngineer(Handle mTimer, any client) //Broadcasts
-{
-	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
-		return Plugin_Continue;
-
-	int metal = TF2_GetMetal(client);
-	TF2_SetMetal(client, metal + EngineerVar);
-	if (MeleeUses[client] != -1)
-	{
-		MeleeUses[client] -= 1;
-		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
-	}
 	return Plugin_Continue;
 }
 
@@ -358,19 +317,40 @@ public Frame_TauntBonus(any clientid)
 	int client = clientid;
 	if ((MeleeUses[client] > 0 || MeleeUses[client] == -1) && TF2_IsPlayerInCondition(client, TFCond_Taunting))
 	{
-		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+		if (TF2_GetPlayerClass(client) == TFClass_DemoMan || TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
-			CreateTimer(4.0, Timer_TauntBonusDemo, client, TIMER_FLAG_NO_MAPCHANGE);
-		} //(Mostly) Stops players cheating the system with partner taunts.
-		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
-		{
-			CreateTimer(4.0, Timer_TauntBonusEngineer, client, TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(4.0, Timer_TauntBonus, client, TIMER_FLAG_NO_MAPCHANGE); //(Mostly) Stops players cheating the system with partner taunts.
 		}
 		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
 		{
 			PrintToChatAll("placeholder"); //DEBUG
 		}*/
 	}
+}
+
+public Action Timer_TauntBonus(Handle mTimer, any client)
+{
+	int HaleTeam = VSH_GetSaxtonHaleTeam();
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam || !TF2_IsPlayerInCondition(client, TFCond_Taunting))
+		return Plugin_Continue;
+
+	if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+	{
+		if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
+		{
+			TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
+		}
+	}
+
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
+	{
+		int metal = TF2_GetMetal(client);
+		TF2_SetMetal(client, metal + EngineerVar);
+	}
+
+	AddMeleeUses(client, -1);
+	
+	return Plugin_Continue;
 }
 
 public void OnClientDisconnect(int client)
@@ -387,7 +367,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 		{
 			case 0: //Credits
 			{
-				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.4b{default} by {unique}Starblaster64{default}.");
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.5{default} by {unique}Starblaster64{default}.");
 			}
 			case 1: //Scout
 			{
@@ -536,9 +516,95 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 	}
 }
 
-public Frame_Reroll(any data) //Re-roll for announcements if one selected was for a disabled feature
+public Frame_Reroll(any data) //Re-roll for announcements if the one selected was for a disabled feature
 {
 	CreateTimer(0.1, Timer_Announce, TIMER_FLAG_NO_MAPCHANGE);
+}
+
+stock void AddMeleeUses(int client, int uses)
+{
+	if (!IsValidClient(client) || !IsPlayerAlive(client))
+		return;
+
+	if (MeleeUses[client] != -1)
+	{
+		MeleeUses[client] += uses;
+		if (MeleeUses[client] < 0)
+			MeleeUses[client] = 0;
+
+		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
+	}
+}
+
+stock int GetMelee(int client)
+{
+	/*int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+	if (ActiveWeapon == -1)
+		return Plugin_Continue;
+	
+	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");*/
+	
+	int wepindex = GetIndexOfWeaponSlot(client, TFWeaponSlot_Melee);
+	int reskin = -1; //Non-stock/reskin weapon
+	
+	if ((wepindex >= 0 && wepindex <= 8) || (wepindex >= 190 && wepindex <= 198))
+		reskin = 0; //Stock weapon
+		
+	if (wepindex == 609 ||
+		wepindex == 587 || 
+		wepindex == 660 || 
+		wepindex == 196 || 
+		wepindex == 662 || 
+		wepindex == 795 || 
+		wepindex == 804 || 
+		wepindex == 884 || 
+		wepindex == 893 || 
+		wepindex == 902 || 
+		wepindex == 911 || 
+		wepindex == 960 || 
+		wepindex == 969 ||
+		wepindex == 1143 ||
+		wepindex == 264 || 
+		wepindex == 423 || 
+		wepindex == 474 || 
+		wepindex == 880 || 
+		wepindex == 939 || 
+		wepindex == 954 || 
+		wepindex == 1013 || 
+		wepindex == 1071 || 
+		wepindex == 1123 || 
+		wepindex == 1127 ||
+		wepindex == 30667)
+		reskin = 1; //Reskin of stock weapon
+
+	if (wepindex == 15073 || //Wrench weapon skins
+		wepindex == 15074 ||
+		wepindex == 15075 ||
+		wepindex == 15114 ||
+		wepindex == 15139 ||
+		wepindex == 15140 ||
+		wepindex == 15156)
+		reskin = 2; //Weapon skin reskins
+			
+	return reskin;
+}
+
+stock int GetMeleeActive(int client)
+{
+	int melee = -1; //Melee weapon is not active/not stock
+	if (GetMelee(client) > -1)
+	{
+		int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
+		if (ActiveWeapon != -1)
+		{
+			int MeleeIndex = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+			if (ActiveWeapon == MeleeIndex)
+				return melee = 1; //Melee weapon is active and stock/reskin
+		}
+		melee = 0; //Melee weapon is stock/reskin but not active
+	}
+				
+	return melee;
 }
 
 /*
@@ -574,81 +640,6 @@ stock void AddPlayerHealth(int iClient, int iAdd, int iOverheal = 0, bool bStati
 		SetEntityHealth(iClient, iNewHealth);
 	}
 }
-
-stock int GetMeleeActive(int client)
-{
-	int melee = -1;
-	if (GetMelee(client) > -1)
-	{
-		int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-		if (ActiveWeapon != -1)
-		{
-			int MeleeIndex = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
-			if (ActiveWeapon == MeleeIndex)
-				return melee = 1;
-		}
-		melee = 0;
-	}
-				
-	return melee;
-}
-
-stock int GetMelee(int client)
-{
-	/*int ActiveWeapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	if (ActiveWeapon == -1)
-		return Plugin_Continue;
-	
-	int wepindex = GetEntProp(ActiveWeapon, Prop_Send, "m_iItemDefinitionIndex");*/
-	
-	int wepindex = GetIndexOfWeaponSlot(client, TFWeaponSlot_Melee);
-	int reskin = -1;
-	
-	if (wepindex == 0 || 
-		wepindex == 1 || 
-		wepindex == 3 || 
-		wepindex == 5 || 
-		wepindex == 6 || 
-		wepindex == 7 || 
-		wepindex == 8 ||
-		wepindex == 190 || 
-		wepindex == 191 || 
-		wepindex == 193 || 
-		wepindex == 195 || 
-		wepindex == 196 || 
-		wepindex == 197 || 
-		wepindex == 198)
-			reskin = 0;
-		
-	if (wepindex == 609 ||
-		wepindex == 587 || 
-		wepindex == 660 || 
-		wepindex == 196 || 
-		wepindex == 662 || 
-		wepindex == 795 || 
-		wepindex == 804 || 
-		wepindex == 884 || 
-		wepindex == 893 || 
-		wepindex == 902 || 
-		wepindex == 911 || 
-		wepindex == 960 || 
-		wepindex == 969 ||
-		wepindex == 1143 ||
-		wepindex == 264 || 
-		wepindex == 423 || 
-		wepindex == 474 || 
-		wepindex == 880 || 
-		wepindex == 939 || 
-		wepindex == 954 || 
-		wepindex == 1013 || 
-		wepindex == 1071 || 
-		wepindex == 1123 || 
-		wepindex == 1127)
-			reskin = 1;
-			
-	return reskin;
-}
-
 
 stock int GetIndexOfWeaponSlot(int client, int slot)
 {
