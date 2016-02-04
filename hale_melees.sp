@@ -318,58 +318,45 @@ public Action OnPlayerTaunt(int client, int args)
 	return Plugin_Continue;
 }
 
-public Action Timer_TauntBonusDemo(Handle mTimer, any client)
-{
-	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
-		return Plugin_Continue;
-
-	if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
-	{
-		TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
-		if (MeleeUses[client] != -1)
-		{
-			MeleeUses[client] -= 1;
-			CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
-		}
-	}
-	return Plugin_Continue;
-}
-
-public Action Timer_TauntBonusEngineer(Handle mTimer, any client) //Broadcasts
-{
-	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
-		return Plugin_Continue;
-
-	int metal = TF2_GetMetal(client);
-	TF2_SetMetal(client, metal + EngineerVar);
-	if (MeleeUses[client] != -1)
-	{
-		MeleeUses[client] -= 1;
-		CPrintToChat(client, "You have {unique}%i{default} melee uses left!", MeleeUses[client]);
-	}
-	return Plugin_Continue;
-}
-
 public Frame_TauntBonus(any clientid)
 {
 	int client = clientid;
 	if ((MeleeUses[client] > 0 || MeleeUses[client] == -1) && TF2_IsPlayerInCondition(client, TFCond_Taunting))
 	{
-		if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+		if (TF2_GetPlayerClass(client) == TFClass_DemoMan || TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
-			CreateTimer(4.0, Timer_TauntBonusDemo, client, TIMER_FLAG_NO_MAPCHANGE);
-		} //(Mostly) Stops players cheating the system with partner taunts.
-		if (TF2_GetPlayerClass(client) == TFClass_Engineer)
-		{
-			CreateTimer(4.0, Timer_TauntBonusEngineer, client, TIMER_FLAG_NO_MAPCHANGE);
+			CreateTimer(4.0, Timer_TauntBonus, client, TIMER_FLAG_NO_MAPCHANGE); //(Mostly) Stops players cheating the system with partner taunts.
 		}
 		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
 		{
 			PrintToChatAll("placeholder"); //DEBUG
 		}*/
 	}
+}
+
+public Action Timer_TauntBonus(Handle mTimer, any client)
+{
+	int HaleTeam = VSH_GetSaxtonHaleTeam();
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam)
+		return Plugin_Continue;
+
+	if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
+	{
+		if (!TF2_IsPlayerInCondition(client, view_as<TFCond>(73)))
+		{
+			TF2_AddCondition(client, view_as<TFCond>(73), DemoVar);
+		}
+	}
+
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer)
+	{
+		int metal = TF2_GetMetal(client);
+		TF2_SetMetal(client, metal + EngineerVar);
+	}
+
+	AddMeleeUses(client, -1);
+	
+	return Plugin_Continue;
 }
 
 public void OnClientDisconnect(int client)
