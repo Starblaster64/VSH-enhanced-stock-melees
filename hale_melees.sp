@@ -9,14 +9,12 @@
 #include <morecolors>
 
 
-#define TF_MAX_PLAYERS	34
-
 public Plugin myinfo =
 {
 	name = "[VSH] Stock Melee Enhancer",
 	author = "Starblaster64",
 	description = "Grants most stock melees small bonuses.",
-	version = "0.5",
+	version = "0.6",
 	url = "https://github.com/Starblaster64/vsh-enhanced-stock-melees"
 };
 
@@ -25,14 +23,14 @@ ConVar cvarEnabled, cvarAnnounce, cvarReskins, cvarScout, cvarScoutVar, cvarSold
 bool g_bEnabled = false;
 int IsEnabled, ReskinsEnabled, ScoutUse, SoldierUse, DemoUse, HeavyUse, EngineerUse, EngineerVar;
 float ScoutVar, SoldierVar, DemoVar, HeavyVar, Announce = 45.0;
-int MeleeUses[TF_MAX_PLAYERS];
+int MeleeUses[MAXPLAYERS + 1];
 //Handle useHUD;
 
 public void OnPluginStart()
 {
 	//Create CVARs
 	cvarEnabled = CreateConVar("hale_melees_enabled", "1.0", "Enables the plugin.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvarAnnounce = CreateConVar("hale_melees_announce", "45.0", "Broadcasts of any enabled enhanced melees will be displayed every X seconds. Must be > 1 to display at all.", FCVAR_PLUGIN, true, 0.0, false);
+	cvarAnnounce = CreateConVar("hale_melees_announce", "60.0", "Broadcasts of any enabled enhanced melees will be displayed every X seconds. Must be > 1 to display at all.", FCVAR_PLUGIN, true, 0.0, false);
 	cvarReskins = CreateConVar("hale_melees_reskins", "0.0", "Sets whether reskins of stock melees will receive the same bonuses as stock melees.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
 	
 	cvarScout = CreateConVar("hale_melees_scout", "2.0", "Determines how many times the Scout's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
@@ -136,7 +134,9 @@ public Action event_player_spawn(Event event, const char[] name, bool dontBroadc
 	int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
 	MeleeUses[client] = 0;
-	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) !=HaleTeam && IsValidClient(client))
+	if (!IsValidClient(client)) //Can this even happen?
+		return Plugin_Continue;
+	if (g_bEnabled && VSH_GetRoundState() != -1 && GetClientTeam(client) != HaleTeam)
 	{
 		if (GetMelee(client) == 0 || (GetMelee(client) != -1 && ReskinsEnabled))
 		{
@@ -315,11 +315,11 @@ public Action OnPlayerTaunt(int client, int args)
 public Frame_TauntBonus(any clientid)
 {
 	int client = clientid;
-	if ((MeleeUses[client] > 0 || MeleeUses[client] == -1) && TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	if ((MeleeUses[client] > 0 || MeleeUses[client] == -1) && TF2_IsPlayerInCondition(client, TFCond_Taunting) && !GetEntProp(client, Prop_Send, "m_bIsReadyToHighFive") && !IsValidEntity(GetEntPropEnt(client, Prop_Send, "m_hHighFivePartner")))
 	{
 		if (TF2_GetPlayerClass(client) == TFClass_DemoMan || TF2_GetPlayerClass(client) == TFClass_Engineer)
 		{
-			CreateTimer(4.0, Timer_TauntBonus, client, TIMER_FLAG_NO_MAPCHANGE); //(Mostly) Stops players cheating the system with partner taunts.
+			CreateTimer(2.2, Timer_TauntBonus, client, TIMER_FLAG_NO_MAPCHANGE); //(Mostly) Stops players cheating the system with partner taunts. (not really)
 		}
 		/*if (TF2_GetPlayerClass(client) == TFClass_Medic)
 		{
@@ -328,10 +328,10 @@ public Frame_TauntBonus(any clientid)
 	}
 }
 
-public Action Timer_TauntBonus(Handle mTimer, any client)
+public Action Timer_TauntBonus(Handle hTimer, any client)
 {
 	int HaleTeam = VSH_GetSaxtonHaleTeam();
-	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam || !TF2_IsPlayerInCondition(client, TFCond_Taunting))
+	if (!IsEnabled || VSH_GetRoundState() != 1 || !IsValidClient(client) || !IsPlayerAlive(client) || GetClientTeam(client) == HaleTeam || !TF2_IsPlayerInCondition(client, TFCond_Taunting) || GetEntProp(client, Prop_Send, "m_bIsReadyToHighFive") || IsValidEntity(GetEntPropEnt(client, Prop_Send, "m_hHighFivePartner")))
 		return Plugin_Continue;
 
 	if (TF2_GetPlayerClass(client) == TFClass_DemoMan)
