@@ -367,7 +367,7 @@ public Action Timer_Announce(Handle mTimer) //Broadcasts
 		{
 			case 0: //Credits
 			{
-				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.6{default} by {unique}Starblaster64{default}.");
+				CPrintToChatAll("{olive}[VSH]{default} Stock Melee Enhancer {steelblue}v0.7{default} by {unique}Starblaster64{default}.");
 			}
 			case 1: //Scout
 			{
