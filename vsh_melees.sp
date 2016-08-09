@@ -29,33 +29,33 @@ int MeleeUses[MAXPLAYERS + 1];
 public void OnPluginStart()
 {
 	//Create CVARs
-	cvarEnabled = CreateConVar("hale_melees_enabled", "1.0", "Enables the plugin.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvarAnnounce = CreateConVar("hale_melees_announce", "60.0", "Broadcasts of any enabled enhanced melees will be displayed every X seconds. Must be > 1 to display at all.", FCVAR_PLUGIN, true, 0.0, false);
-	cvarReskins = CreateConVar("hale_melees_reskins", "0.0", "Sets whether reskins of stock melees will receive the same bonuses as stock melees.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
+	cvarEnabled = CreateConVar("hale_melees_enabled", "1.0", "Enables the plugin.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvarAnnounce = CreateConVar("hale_melees_announce", "60.0", "Broadcasts of any enabled enhanced melees will be displayed every X seconds. Must be > 1 to display at all.", FCVAR_NOTIFY, true, 0.0, false);
+	cvarReskins = CreateConVar("hale_melees_reskins", "0.0", "Sets whether reskins of stock melees will receive the same bonuses as stock melees.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	
-	cvarScout = CreateConVar("hale_melees_scout", "2.0", "Determines how many times the Scout's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarScoutVar = CreateConVar("hale_melees_scout_variable", "1.0", "Sets how long the Bonk! condition lasts for.", FCVAR_PLUGIN, true, 0.0, false);
+	cvarScout = CreateConVar("hale_melees_scout", "2.0", "Determines how many times the Scout's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	cvarScoutVar = CreateConVar("hale_melees_scout_variable", "1.0", "Sets how long the Bonk! condition lasts for.", FCVAR_NOTIFY, true, 0.0, false);
 	
-	cvarSoldier = CreateConVar("hale_melees_soldier", "1.0", "Enables/Disables the Soldier's melee enhancement.", FCVAR_PLUGIN, true, 0.0, true, 1.0);
-	cvarSoldierVar = CreateConVar("hale_melees_soldier_variable", "1.30", "Sets how much faster Ubercharge is generated while healing a Soldier with a Shovel out. Cannot be lower than 1.0.", FCVAR_PLUGIN, true, 1.0, false);
+	cvarSoldier = CreateConVar("hale_melees_soldier", "1.0", "Enables/Disables the Soldier's melee enhancement.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	cvarSoldierVar = CreateConVar("hale_melees_soldier_variable", "1.30", "Sets how much faster Ubercharge is generated while healing a Soldier with a Shovel out. Cannot be lower than 1.0.", FCVAR_NOTIFY, true, 1.0, false);
 	
-	//cvarPyro = CreateConVar("hale_melees_pyro", "-1.0", "Determines how many times the Pyro's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	//cvarPyroVar = CreateConVar("hale_melees_pyro_variable", "5.0", "Something soething Pyro", FCVAR_PLUGIN, true, 0.0, false);
+	//cvarPyro = CreateConVar("hale_melees_pyro", "-1.0", "Determines how many times the Pyro's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	//cvarPyroVar = CreateConVar("hale_melees_pyro_variable", "5.0", "Something soething Pyro", FCVAR_NOTIFY, true, 0.0, false);
 	
-	cvarDemo = CreateConVar("hale_melees_demo", "2.0", "Determines how many times the Demoman's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarDemoVar = CreateConVar("hale_melees_demo_variable", "1.5", "Sets how long the healing effect lasts in seconds. Cannot be negative.", FCVAR_PLUGIN, true, 0.0, false);
+	cvarDemo = CreateConVar("hale_melees_demo", "2.0", "Determines how many times the Demoman's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	cvarDemoVar = CreateConVar("hale_melees_demo_variable", "1.5", "Sets how long the healing effect lasts in seconds. Cannot be negative.", FCVAR_NOTIFY, true, 0.0, false);
 	
-	cvarHeavy = CreateConVar("hale_melees_heavy", "2.0", "Determines how many times the Heavy's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarHeavyVar = CreateConVar("hale_melees_heavy_variable", "400.0", "Sets how much extra knockback the fists receive in Hammer Units. Can be negative.", FCVAR_PLUGIN);
+	cvarHeavy = CreateConVar("hale_melees_heavy", "2.0", "Determines how many times the Heavy's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	cvarHeavyVar = CreateConVar("hale_melees_heavy_variable", "400.0", "Sets how much extra knockback the fists receive in Hammer Units. Can be negative.", FCVAR_NOTIFY);
 	
-	cvarEngineer = CreateConVar("hale_melees_engineer", "1.0", "Determines how many times the Engineer's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	cvarEngineerVar = CreateConVar("hale_melees_engineer_variable", "100.0", "Sets how much metal is gained per use. Cannot be negative.", FCVAR_PLUGIN, true, 0.0, false);
+	cvarEngineer = CreateConVar("hale_melees_engineer", "1.0", "Determines how many times the Engineer's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	cvarEngineerVar = CreateConVar("hale_melees_engineer_variable", "100.0", "Sets how much metal is gained per use. Cannot be negative.", FCVAR_NOTIFY, true, 0.0, false);
 	
-	//cvarMedic = CreateConVar("hale_melees_medic", "1.0", "Determines how many times the Medic's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	//cvarMedicVar = CreateConVar("hale_melees_medic_variable", "1.0", "Sets how many team-mates to revive per use. -1 for the entire team (not recommended).", FCVAR_PLUGIN, true, 0.0, false);
+	//cvarMedic = CreateConVar("hale_melees_medic", "1.0", "Determines how many times the Medic's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	//cvarMedicVar = CreateConVar("hale_melees_medic_variable", "1.0", "Sets how many team-mates to revive per use. -1 for the entire team (not recommended).", FCVAR_NOTIFY, true, 0.0, false);
 	
-	//cvarSniper = CreateConVar("hale_melees_sniper", "-1.0", "Determines how many times the Sniper's stock ability can trigger. -1 for infinite.", FCVAR_PLUGIN, true, -1.0, false);
-	//cvarSniperVar = CreateConVar("hale_melees_sniper_variable", "5.0", ".", FCVAR_PLUGIN, true, 0.0, false);
+	//cvarSniper = CreateConVar("hale_melees_sniper", "-1.0", "Determines how many times the Sniper's stock ability can trigger. -1 for infinite.", FCVAR_NOTIFY, true, -1.0, false);
+	//cvarSniperVar = CreateConVar("hale_melees_sniper_variable", "5.0", ".", FCVAR_NOTIFY, true, 0.0, false);
 	
 	AutoExecConfig(true, "VSHMeleeEnhancer"); //Generates config file in cfg/sourcemod
 	
