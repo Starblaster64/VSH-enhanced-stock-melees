@@ -563,6 +563,8 @@ stock int GetMelee(int client)
 		wepindex == 911 || 
 		wepindex == 960 || 
 		wepindex == 969 ||
+		wepindex == 999 ||
+		wepindex == 221 || //Holy Mackerel
 		wepindex == 1143 ||
 		wepindex == 264 || 
 		wepindex == 423 || 
@@ -574,7 +576,8 @@ stock int GetMelee(int client)
 		wepindex == 1071 || 
 		wepindex == 1123 || 
 		wepindex == 1127 ||
-		wepindex == 30667)
+		wepindex == 30667 ||
+		wepindex == 30758)
 		reskin = 1; //Reskin of stock weapon
 
 	if (wepindex == 15073 || //Wrench weapon skins
